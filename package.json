@@ -11,8 +11,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js",
-    "start:railway": "npm run migrate && npm run seed && npm start",
+    "start": "node dist/src/server.js",
+    "start:railway": "node dist/scripts/migrate.js && node dist/scripts/seed.js && npm start",
     "migrate": "tsx scripts/migrate.ts",
     "seed": "tsx scripts/seed.ts",
     "create-admin": "tsx scripts/create-admin.ts",
