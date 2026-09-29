@@ -18,7 +18,9 @@
     "create-admin": "tsx scripts/create-admin.ts",
     "reset-admin-password": "tsx scripts/reset-admin-password.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --import tsx --test src/**/*.test.ts"
+    "test": "node --import tsx --test src/**/*.test.ts",
+    "digest": "tsx scripts/daily-digest.ts",
+    "start:digest": "node dist/scripts/daily-digest.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
