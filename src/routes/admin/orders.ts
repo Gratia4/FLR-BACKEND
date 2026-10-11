@@ -158,12 +158,12 @@ router.patch(
 
       const updated = await client.query(
         `UPDATE orders
-            SET status=$1,
+            SET status=$1::order_status,
                 tracking_number=COALESCE($2,tracking_number),
                 expected_delivery_date=COALESCE($3::date,expected_delivery_date),
-                delivered_at = CASE WHEN $1='DELIVERED' THEN now() ELSE delivered_at END,
-                cancelled_at = CASE WHEN $1='CANCELLED' THEN now() ELSE cancelled_at END,
-                cancelled_reason = CASE WHEN $1='CANCELLED' THEN $4 ELSE cancelled_reason END
+                delivered_at = CASE WHEN $1::order_status='DELIVERED' THEN now() ELSE delivered_at END,
+                cancelled_at = CASE WHEN $1::order_status='CANCELLED' THEN now() ELSE cancelled_at END,
+                cancelled_reason = CASE WHEN $1::order_status='CANCELLED' THEN $4 ELSE cancelled_reason END
           WHERE id=$5
           RETURNING id,reference,status,tracking_number,expected_delivery_date,updated_at`,
         [input.status, input.trackingNumber ?? null, input.expectedDeliveryDate ?? null, input.reason ?? null, id],

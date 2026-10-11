@@ -4,6 +4,8 @@ import { query, transaction } from "../../db.js";
 import { asyncHandler } from "../../lib/async-handler.js";
 import { ApiError } from "../../lib/errors.js";
 import { requirePermission } from "../../middleware/authenticate.js";
+import { detectImageType, PRODUCT_IMAGE_PREFIX, productImageName, productImageUpload, productImageUrl } from "../../lib/product-images.js";
+import { putObject } from "../../lib/storage.js";
 
 const router = Router();
 
@@ -109,6 +111,22 @@ router.get(
     const result = await query(`${PRODUCT_SELECT} WHERE p.id=$1`, [id]);
     if (!result.rowCount) throw new ApiError(404, "Product not found", "NOT_FOUND");
     response.json({ data: result.rows[0] });
+  }),
+);
+
+/** Stores one product photo and returns its public URL for the product's imageUrls. */
+router.post(
+  "/products/images",
+  requirePermission("catalogue"),
+  productImageUpload,
+  asyncHandler(async (request, response) => {
+    const file = request.file;
+    if (!file) throw new ApiError(422, "Choose an image to upload", "IMAGE_REQUIRED");
+    const type = detectImageType(file.buffer);
+    if (!type) throw new ApiError(415, `${file.originalname} is not a valid JPG, PNG or WebP image`, "UNSUPPORTED_FILE_TYPE");
+    const name = productImageName(type);
+    await putObject(`${PRODUCT_IMAGE_PREFIX}${name}`, file.buffer, type);
+    response.status(201).json({ data: { url: productImageUrl(request, name), sizeBytes: file.size } });
   }),
 );
 

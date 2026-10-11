@@ -91,9 +91,9 @@ router.patch(
 
     const result = await query<{ id: string; name: string; status: string }>(
       `UPDATE businesses
-          SET status=$1,
+          SET status=$1::account_status,
               status_reason=$2,
-              approved_at = CASE WHEN $1='APPROVED' AND approved_at IS NULL THEN now() ELSE approved_at END,
+              approved_at = CASE WHEN $1::account_status='APPROVED' AND approved_at IS NULL THEN now() ELSE approved_at END,
               credit_limit_rwf = COALESCE($4, credit_limit_rwf),
               payment_terms_days = COALESCE($5, payment_terms_days)
         WHERE id=$3

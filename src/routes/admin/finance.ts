@@ -187,7 +187,7 @@ router.post(
 
       const created = await client.query(
         `INSERT INTO payments(reference,invoice_id,business_id,method,status,amount_rwf,external_reference,payer_note,received_at,recorded_by)
-         VALUES($1,$2,$3,$4,$5,$6,$7,$8, CASE WHEN $5='CONFIRMED' THEN now() ELSE NULL END, $9)
+         VALUES($1,$2,$3,$4,$5::payment_status,$6,$7,$8, CASE WHEN $5::payment_status='CONFIRMED' THEN now() ELSE NULL END, $9)
          RETURNING *`,
         [
           reference, input.invoiceId ?? null, input.businessId, input.method,
@@ -256,7 +256,7 @@ router.patch(
       }
 
       const result = await client.query(
-        `UPDATE payments SET status=$2, received_at = CASE WHEN $2='CONFIRMED' THEN now() ELSE received_at END
+        `UPDATE payments SET status=$2::payment_status, received_at = CASE WHEN $2::payment_status='CONFIRMED' THEN now() ELSE received_at END
           WHERE id=$1 RETURNING *`,
         [id, input.status],
       );

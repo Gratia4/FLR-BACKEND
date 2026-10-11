@@ -5,6 +5,9 @@ import { asyncHandler } from "../lib/async-handler.js";
 import { ApiError } from "../lib/errors.js";
 import { authenticate, requireApprovedClient } from "../middleware/authenticate.js";
 import { loadPriceBreaks, resolveUnitPrice, tierDiscountFor } from "../lib/pricing.js";
+import { CONTENT_TYPES, PRODUCT_IMAGE_NAME, PRODUCT_IMAGE_PREFIX } from "../lib/product-images.js";
+import { localReadStream, objectExists, presignedUrl } from "../lib/storage.js";
+import { config } from "../config.js";
 
 const router = Router();
 
@@ -179,6 +182,30 @@ router.get(
       },
       tier: { name: tierName, discountPercent },
     });
+  }),
+);
+
+/** Public product photos uploaded from the admin catalogue. */
+router.get(
+  "/images/:name",
+  asyncHandler(async (request, response) => {
+    const name = String(request.params.name);
+    if (!PRODUCT_IMAGE_NAME.test(name)) throw new ApiError(404, "Image not found", "NOT_FOUND");
+    const key = `${PRODUCT_IMAGE_PREFIX}${name}`;
+    if (config.STORAGE_DRIVER === "s3") {
+      // Short-lived signed link; the redirect itself may be cached briefly.
+      response.set("Cache-Control", "public, max-age=240");
+      return response.redirect(302, presignedUrl(key, "S3")!);
+    }
+    if (!(await objectExists(key, "LOCAL"))) throw new ApiError(404, "Image not found", "NOT_FOUND");
+    response.set({
+      "Content-Type": CONTENT_TYPES[name.split(".").pop()!],
+      // Names are random and never reused, so the bytes behind a URL never change.
+      "Cache-Control": "public, max-age=31536000, immutable",
+    });
+    localReadStream(key)
+      .on("error", () => (response.headersSent ? response.end() : response.status(404).end()))
+      .pipe(response);
   }),
 );
 
