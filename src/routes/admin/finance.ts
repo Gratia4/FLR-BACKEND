@@ -8,12 +8,16 @@ import { createReference } from "../../lib/reference.js";
 import { mails } from "../../lib/mailer.js";
 
 const router = Router();
-router.use(requirePermission("finance"));
+// This router is mounted without a path prefix (see ./index.ts), so a
+// router-wide guard would also block unrelated admin routes for staff without
+// "finance" access. The guard is therefore applied to each route below.
+const guard = requirePermission("finance");
 
 /* --------------------------------- invoices -------------------------------- */
 
 router.get(
   "/invoices",
+  guard,
   asyncHandler(async (request, response) => {
     const filters = z
       .object({
@@ -45,6 +49,7 @@ router.get(
 
 router.get(
   "/invoices/:id",
+  guard,
   asyncHandler(async (request, response) => {
     const id = z.uuid().parse(request.params.id);
     const invoice = await query(
@@ -76,6 +81,7 @@ router.get(
 /** Records the RRA EBM receipt returned by the billing machine for this invoice. */
 router.patch(
   "/invoices/:id/ebm",
+  guard,
   asyncHandler(async (request, response) => {
     const id = z.uuid().parse(request.params.id);
     const input = z
@@ -106,6 +112,7 @@ router.patch(
 
 router.get(
   "/payments",
+  guard,
   asyncHandler(async (request, response) => {
     const filters = z
       .object({
@@ -139,6 +146,7 @@ router.get(
  */
 router.post(
   "/payments",
+  guard,
   asyncHandler(async (request, response) => {
     const input = z
       .object({
@@ -225,6 +233,7 @@ router.post(
 
 router.patch(
   "/payments/:id/status",
+  guard,
   asyncHandler(async (request, response) => {
     const id = z.uuid().parse(request.params.id);
     const input = z.object({ status: z.enum(["CONFIRMED", "FAILED", "REVERSED"]) }).parse(request.body);
@@ -271,6 +280,7 @@ router.patch(
 
 router.get(
   "/finance/summary",
+  guard,
   asyncHandler(async (_request, response) => {
     const [metrics, ageing, recent] = await Promise.all([
       query(

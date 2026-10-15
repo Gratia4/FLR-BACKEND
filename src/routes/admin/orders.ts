@@ -378,12 +378,12 @@ router.patch(
       const creditNoteReference = input.status === "CREDITED" ? createReference("CRN") : null;
       const updated = await client.query(
         `UPDATE returns
-            SET status=$1,
+            SET status=$1::return_status,
                 credit_amount_rwf = COALESCE($2, credit_amount_rwf),
                 credit_note_reference = COALESCE($3, credit_note_reference),
                 note = COALESCE($4, note),
                 resolved_by=$5,
-                resolved_at = CASE WHEN $1 IN ('CREDITED','REJECTED') THEN now() ELSE resolved_at END
+                resolved_at = CASE WHEN $1::return_status IN ('CREDITED','REJECTED') THEN now() ELSE resolved_at END
           WHERE id=$6 RETURNING *`,
         [input.status, input.creditAmountRwf ?? null, creditNoteReference, input.note ?? null, request.auth!.userId, id],
       );

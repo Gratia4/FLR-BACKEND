@@ -8,12 +8,16 @@ import { requirePermission } from "../../middleware/authenticate.js";
 import { adjustStock } from "../../lib/inventory.js";
 
 const router = Router();
-router.use(requirePermission("inventory"));
+// This router is mounted without a path prefix (see ./index.ts), so a
+// router-wide guard would also block unrelated admin routes for staff without
+// "inventory" access. The guard is therefore applied to each route below.
+const guard = requirePermission("inventory");
 
 /* --------------------------------- overview -------------------------------- */
 
 router.get(
   "/inventory",
+  guard,
   asyncHandler(async (request, response) => {
     const days = z.coerce.number().int().positive().max(730).default(config.EXPIRY_ALERT_DAYS).parse(
       request.query.expiryWindowDays ?? config.EXPIRY_ALERT_DAYS,
@@ -78,6 +82,7 @@ router.get(
 
 router.get(
   "/batches",
+  guard,
   asyncHandler(async (request, response) => {
     const filters = z
       .object({
@@ -108,6 +113,7 @@ router.get(
 /** Goods-received note: creates the batch and raises on-hand stock together. */
 router.post(
   "/batches",
+  guard,
   asyncHandler(async (request, response) => {
     const input = z
       .object({
@@ -161,6 +167,7 @@ router.post(
 /** Writes off expired stock so it can never be picked or sold. */
 router.post(
   "/batches/:id/write-off",
+  guard,
   asyncHandler(async (request, response) => {
     const id = z.uuid().parse(request.params.id);
     const input = z.object({ reason: z.string().min(3).max(500) }).parse(request.body);
@@ -203,6 +210,7 @@ router.post(
  */
 router.post(
   "/batches/:id/recall",
+  guard,
   asyncHandler(async (request, response) => {
     const id = z.uuid().parse(request.params.id);
     const input = z.object({ reason: z.string().min(3).max(500) }).parse(request.body);
@@ -260,6 +268,7 @@ router.post(
 
 router.get(
   "/stock-movements",
+  guard,
   asyncHandler(async (request, response) => {
     const filters = z
       .object({ productId: z.uuid().optional(), limit: z.coerce.number().int().min(1).max(200).default(100) })
