@@ -156,7 +156,7 @@ router.post(
       if (input.stockQuantity > 0) {
         await client.query(
           `INSERT INTO stock_movements(product_id,reason,quantity_delta,balance_after,reference_type,reference_id,actor_user_id,note)
-           VALUES($1,'RECEIPT',$2,$2,'product',$1,$3,'Opening stock')`,
+           VALUES($1::uuid,'RECEIPT',$2,$2,'product',$1::uuid::text,$3,'Opening stock')`,
           [id, input.stockQuantity, request.auth!.userId],
         );
       }
@@ -196,7 +196,7 @@ router.patch(
           if (delta !== 0) {
             await client.query(
               `INSERT INTO stock_movements(product_id,reason,quantity_delta,balance_after,reference_type,reference_id,actor_user_id,note)
-               VALUES($1,'ADJUSTMENT',$2,$3,'product',$1,$4,'Manual catalogue adjustment')`,
+               VALUES($1::uuid,'ADJUSTMENT',$2,$3,'product',$1::uuid::text,$4,'Manual catalogue adjustment')`,
               [id, delta, fields.stockQuantity, request.auth!.userId],
             );
           }

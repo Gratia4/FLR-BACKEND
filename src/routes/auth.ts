@@ -251,7 +251,7 @@ router.post(
       await client.query(`UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`, [record.user_id]);
       await client.query(
         `INSERT INTO audit_logs(actor_user_id,action,entity_type,entity_id,metadata)
-         VALUES($1,'PASSWORD_RESET','user',$1,'{}')`,
+         VALUES($1::uuid,'PASSWORD_RESET','user',$1::uuid::text,'{}')`,
         [record.user_id],
       );
     });
